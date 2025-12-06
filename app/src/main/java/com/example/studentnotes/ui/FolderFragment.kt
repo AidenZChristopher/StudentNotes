@@ -2,10 +2,17 @@ package com.example.studentnotes.ui
 
 import android.app.AlertDialog
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
+import androidx.appcompat.widget.SearchView
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -42,8 +49,32 @@ class FolderFragment : Fragment(R.layout.fragment_folders), FolderAdapter.OnFold
                 folderAdapter.submitList(folders)
             }
         }
+
+        // --- NEW: Search Menu Setup ---
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.menu_search, menu)
+
+                val searchItem = menu.findItem(R.id.action_search)
+                val searchView = searchItem.actionView as SearchView
+
+                searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                    override fun onQueryTextSubmit(query: String?): Boolean = true
+                    override fun onQueryTextChange(newText: String?): Boolean {
+                        viewModel.searchQuery.value = newText.orEmpty()
+                        return true
+                    }
+                })
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return false
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
+    // ... existing showAddFolderDialog, onFolderClick, onFolderDelete methods ...
     private fun showAddFolderDialog() {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("New Folder")

@@ -25,5 +25,6 @@ data class Note(
     val title: String?,
     val content: String?,
     val date: Long,
-    val folderId: Int
+    val folderId: Int,
+    val imagePath: String? = null // NEW FIELD
 ) : Parcelable

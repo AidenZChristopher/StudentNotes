@@ -6,7 +6,7 @@ import com.example.studentnotes.data.dao.NoteDao
 import com.example.studentnotes.data.entity.Folder
 import com.example.studentnotes.data.entity.Note
 
-@Database(entities = [Note::class, Folder::class], version = 2)
+@Database(entities = [Note::class, Folder::class], version = 3)
 abstract class NoteDatabase: RoomDatabase() {
     abstract fun noteDao(): NoteDao
 }

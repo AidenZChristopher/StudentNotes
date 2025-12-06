@@ -8,6 +8,9 @@ import com.example.studentnotes.databinding.ItemNotesBinding
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Date
+import coil.load
+import java.io.File
+import android.view.View
 
 class NoteAdapter(
     private val mNotes: List<Note>,
@@ -60,6 +63,13 @@ class NoteAdapter(
                 contentNote.text = note.content
                 val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                 dateNotes.text = formatter.format(Date(note.date))
+
+                if (note.imagePath != null) {
+                    noteImage.visibility = View.VISIBLE
+                    noteImage.load(File(note.imagePath))
+                } else {
+                    noteImage.visibility = View.GONE
+                }
             }
         }
     }

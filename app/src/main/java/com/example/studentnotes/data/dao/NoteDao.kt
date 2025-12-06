@@ -12,8 +12,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface NoteDao {
 
-    @Query("SELECT * FROM folders ORDER BY timestamp DESC")
-    fun getAllFolders(): Flow<List<Folder>>
+    // --- Folder Operations ---
+    // Modified: Added search capability using LIKE
+    @Query("SELECT * FROM folders WHERE name LIKE '%' || :searchQuery || '%' ORDER BY timestamp DESC")
+    fun getFolders(searchQuery: String): Flow<List<Folder>>
 
     @Insert
     suspend fun insertFolder(folder: Folder)
@@ -21,8 +23,15 @@ interface NoteDao {
     @Delete
     suspend fun deleteFolder(folder: Folder)
 
-    @Query("SELECT * FROM notes WHERE folderId = :folderId ORDER BY date DESC")
-    fun getNotesByFolder(folderId: Int): Flow<List<Note>>
+    // --- Note Operations ---
+    // Modified: Added search capability filtering by Title OR Content within a specific folder
+    @Query("""
+        SELECT * FROM notes 
+        WHERE folderId = :folderId 
+        AND (title LIKE '%' || :searchQuery || '%' OR content LIKE '%' || :searchQuery || '%') 
+        ORDER BY date DESC
+    """)
+    fun getNotesByFolder(folderId: Int, searchQuery: String): Flow<List<Note>>
 
     @Insert
     suspend fun insertNote(note: Note)

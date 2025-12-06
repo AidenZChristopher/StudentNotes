@@ -8,6 +8,7 @@
         android:layout_height="match_parent"
         tools:context=".ui.AddEditNoteFragment">
 
+        <!-- TITLE -->
         <EditText
             android:id="@+id/title_edit"
             style="@style/TextAppearance.AppCompat.Title"
@@ -23,6 +24,23 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- IMAGE PREVIEW -->
+        <ImageView
+            android:id="@+id/image_preview"
+            android:layout_width="0dp"
+            android:layout_height="200dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginHorizontal="8dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/title_edit"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:visibility="visible"
+            tools:src="@android:drawable/ic_menu_gallery"
+            android:contentDescription="Note Image" />
+
+        <!-- CONTENT -->
         <EditText
             android:id="@+id/content_edit"
             android:layout_width="0dp"
@@ -39,9 +57,26 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/title_edit" />
+            app:layout_constraintTop_toBottomOf="@+id/image_preview" />
 
-        <!-- Existing Save Button on Bottom Right -->
+        <!-- UPLOAD IMAGE BUTTON (Bottom Left) -->
+        <!-- Added app:tint to make the icon visible on the white button -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/add_image_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginBottom="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Add Image"
+            app:backgroundTint="@android:color/white"
+            app:tint="@android:color/black"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:srcCompat="@android:drawable/ic_menu_gallery" />
+
+        <!-- SAVE BUTTON (Bottom Right) -->
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/save_btn"
             android:layout_width="wrap_content"
@@ -49,6 +84,7 @@
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="16dp"
             android:clickable="true"
+            android:focusable="true"
             android:contentDescription="Save Note"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

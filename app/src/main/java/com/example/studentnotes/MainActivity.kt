@@ -25,14 +25,19 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        // Use 'as?' to prevent a crash if the fragment is not found immediately
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.nav_host) as? NavHostFragment
+
         if (navHostFragment != null) {
             navController = navHostFragment.navController
-            //setupActionBarWithNavController(navController)
+            // UNCOMMENTED: This enables the back arrow and titles in the top bar
+            setupActionBarWithNavController(navController)
         }
     }
+
     override fun onSupportNavigateUp(): Boolean {
+        // This handles the click on the back arrow
         return if (::navController.isInitialized) {
             navController.navigateUp() || super.onSupportNavigateUp()
         } else {

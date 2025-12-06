@@ -24,11 +24,16 @@ class AddEditNoteFragment : Fragment(R.layout.fragment_addednotes) {
 
         val binding = FragmentAddednotesBinding.bind(view)
 
+        // These arguments come from nav_graph.xml
         val args: AddEditNoteFragmentArgs by navArgs()
         val note = args.note
         val currentFolderId = args.folderId
 
+        // NOTE: Manual back button listener removed.
+        // The MainActivity setupActionBarWithNavController handles the back arrow now.
+
         if (note != null) {
+            // --- EDITING AN EXISTING NOTE ---
             binding.apply {
                 titleEdit.setText(note.title)
                 contentEdit.setText(note.content)
@@ -37,23 +42,21 @@ class AddEditNoteFragment : Fragment(R.layout.fragment_addednotes) {
                     val title = titleEdit.text.toString()
                     val content = contentEdit.text.toString()
 
-                    // Copy preserves the existing folderId and ID
-                    val updateNote = note.copy(
+                    val updatedNote = note.copy(
                         title = title,
                         content = content,
                         date = System.currentTimeMillis()
                     )
-                    viewModel.updateNote(updateNote)
+                    viewModel.updateNote(updatedNote)
                 }
             }
         } else {
-            // CREATE NEW NOTE
+            // --- CREATING A NEW NOTE ---
             binding.apply {
                 saveBtn.setOnClickListener {
                     val title = titleEdit.text.toString()
                     val content = contentEdit.text.toString()
 
-                    // Must include folderId here so the note goes into the correct folder
                     val newNote = Note(
                         title = title,
                         content = content,
@@ -66,10 +69,11 @@ class AddEditNoteFragment : Fragment(R.layout.fragment_addednotes) {
             }
         }
 
+        // --- HANDLE NAVIGATION EVENTS FROM VIEWMODEL ---
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.notesEvent.collect { event: NoteViewModel.NotesEvent ->
+            viewModel.notesEvent.collect { event ->
                 if (event is NoteViewModel.NotesEvent.NavigateBackWithResult) {
-                    // Correctly go back to the previous screen (NoteFragment)
+                    // Go back to the previous screen (NoteFragment)
                     findNavController().popBackStack()
                 }
             }

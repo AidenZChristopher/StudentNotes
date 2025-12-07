@@ -8,6 +8,34 @@
         android:layout_height="match_parent"
         tools:context=".ui.AddEditNoteFragment">
 
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/mic_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:layout_marginStart="16dp"
+            android:clickable="true"
+            android:contentDescription="Speech to Text"
+            app:backgroundTint="@android:color/white"
+            app:tint="@android:color/black"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/ai_btn"
+            app:layout_constraintStart_toEndOf="@+id/add_image_btn"
+            app:srcCompat="@android:drawable/ic_btn_speak_now" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/ai_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:layout_marginEnd="16dp"
+            android:clickable="true"
+            android:contentDescription="AI Summarize"
+            app:backgroundTint="@android:color/holo_purple"
+            app:tint="@android:color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/save_btn"
+            app:srcCompat="@android:drawable/ic_menu_edit" />
         <!-- TITLE -->
         <EditText
             android:id="@+id/title_edit"

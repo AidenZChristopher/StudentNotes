@@ -1,5 +1,6 @@
 package com.example.studentnotes.ui
 
+import android.app.Activity
 import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.Color
@@ -7,6 +8,8 @@ import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.os.Bundle
+import android.speech.RecognizerIntent
+import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -23,43 +26,136 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import coil.load
+import com.example.studentnotes.BuildConfig
 import com.example.studentnotes.R
 import com.example.studentnotes.data.entity.Note
 import com.example.studentnotes.databinding.FragmentAddednotesBinding
 import com.example.studentnotes.viewmodel.NoteViewModel
+import com.google.ai.client.generativeai.GenerativeModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import java.util.Locale
 
 @AndroidEntryPoint
 class AddEditNoteFragment : Fragment(R.layout.fragment_addednotes) {
 
     private val viewModel by viewModels<NoteViewModel>()
-    private var currentImagePath: String? = null
-
-    // We need binding accessible for the PDF generator
     private var _binding: FragmentAddednotesBinding? = null
     private val binding get() = _binding!!
 
-    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let {
-            val internalPath = copyImageToInternalStorage(it)
-            currentImagePath = internalPath
-            binding.imagePreview.visibility = View.VISIBLE
-            binding.imagePreview.load(File(internalPath))
-        }
+    private var currentImagePath: String? = null
+
+    // --- AI MODEL ---
+    private val generativeModel by lazy {
+        GenerativeModel(
+            modelName = "gemini-pro",
+            apiKey = BuildConfig.GEMINI_API_KEY
+        )
     }
+
+    // --- ACTIVITY LAUNCHERS ---
+    private val speechLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+                val spokenText: ArrayList<String> =
+                    result.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS) as ArrayList<String>
+
+                if (spokenText.isNotEmpty()) {
+                    val existingText = binding.contentEdit.text.toString()
+                    val newText =
+                        if (existingText.isBlank()) spokenText[0] else "$existingText\n${spokenText[0]}"
+                    binding.contentEdit.setText(newText)
+                }
+            }
+        }
+
+    private val pickImageLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                currentImagePath = copyImageToInternalStorage(it)
+                binding.imagePreview.visibility = View.VISIBLE
+                binding.imagePreview.load(File(currentImagePath!!))
+            }
+        }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentAddednotesBinding.bind(view)
 
+        Log.d("API_KEY_CHECK", "API Key from BuildConfig is: ${BuildConfig.GEMINI_API_KEY}")
+
         val args: AddEditNoteFragmentArgs by navArgs()
         val note = args.note
         val currentFolderId = args.folderId
 
-        // --- MENU SETUP FOR SHARE BUTTON ---
+        setupUI(note)
+        setupClickListeners(note, currentFolderId)
+        setupMenu()
+        observeEvents()
+    }
+
+    private fun setupUI(note: Note?) {
+        if (note != null) {
+            binding.titleEdit.setText(note.title)
+            binding.contentEdit.setText(note.content)
+            currentImagePath = note.imagePath
+            if (currentImagePath != null) {
+                binding.imagePreview.visibility = View.VISIBLE
+                binding.imagePreview.load(File(currentImagePath!!))
+            }
+        }
+    }
+
+    private fun setupClickListeners(note: Note?, currentFolderId: Int) {
+        binding.addImageBtn.setOnClickListener { pickImageLauncher.launch("image/*") }
+        binding.micBtn.setOnClickListener { startSpeechToText() }
+        binding.aiBtn.setOnClickListener {
+            val currentText = binding.contentEdit.text.toString()
+            if (currentText.isBlank()) {
+                Toast.makeText(requireContext(), "Write or speak something first!", Toast.LENGTH_SHORT).show()
+            } else {
+                summarizeWithAI(currentText)
+            }
+        }
+
+        binding.saveBtn.setOnClickListener {
+            val title = binding.titleEdit.text.toString()
+            val content = binding.contentEdit.text.toString()
+
+            if (note != null) { // Update existing note
+                val updatedNote = note.copy(
+                    title = title,
+                    content = content,
+                    date = System.currentTimeMillis(),
+                    imagePath = currentImagePath
+                )
+                viewModel.updateNote(updatedNote)
+            } else { // Insert new note
+                val newNote = Note(
+                    title = title,
+                    content = content,
+                    date = System.currentTimeMillis(),
+                    folderId = currentFolderId,
+                    imagePath = currentImagePath
+                )
+                viewModel.insert(newNote)
+            }
+        }
+    }
+
+    private fun observeEvents() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.notesEvent.collect { event ->
+                if (event is NoteViewModel.NotesEvent.NavigateBackWithResult) {
+                    findNavController().popBackStack()
+                }
+            }
+        }
+    }
+
+    private fun setupMenu() {
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -72,7 +168,7 @@ class AddEditNoteFragment : Fragment(R.layout.fragment_addednotes) {
                         val title = binding.titleEdit.text.toString()
                         val content = binding.contentEdit.text.toString()
                         if (title.isBlank() && content.isBlank()) {
-                            Toast.makeText(requireContext(), "Cannot share empty note", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), "Cannot share an empty note", Toast.LENGTH_SHORT).show()
                         } else {
                             generatePdfAndShare(title, content)
                         }
@@ -82,105 +178,65 @@ class AddEditNoteFragment : Fragment(R.layout.fragment_addednotes) {
                 }
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-        // -----------------------------------
+    }
 
-        if (note != null) {
-            currentImagePath = note.imagePath
-            if (currentImagePath != null) {
-                binding.imagePreview.visibility = View.VISIBLE
-                binding.imagePreview.load(File(currentImagePath!!))
-            }
+    private fun startSpeechToText() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...")
         }
-
-        binding.addImageBtn.setOnClickListener {
-            pickImageLauncher.launch("image/*")
+        try {
+            speechLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Speech recognition not supported on this device", Toast.LENGTH_SHORT).show()
         }
+    }
 
-        if (note != null) {
-            binding.apply {
-                titleEdit.setText(note.title)
-                contentEdit.setText(note.content)
-                saveBtn.setOnClickListener {
-                    val title = titleEdit.text.toString()
-                    val content = contentEdit.text.toString()
-                    val updatedNote = note.copy(
-                        title = title,
-                        content = content,
-                        date = System.currentTimeMillis(),
-                        imagePath = currentImagePath
-                    )
-                    viewModel.updateNote(updatedNote)
-                }
-            }
-        } else {
-            binding.apply {
-                saveBtn.setOnClickListener {
-                    val title = titleEdit.text.toString()
-                    val content = contentEdit.text.toString()
-                    val newNote = Note(
-                        title = title,
-                        content = content,
-                        date = System.currentTimeMillis(),
-                        folderId = currentFolderId,
-                        imagePath = currentImagePath
-                    )
-                    viewModel.insert(newNote)
-                }
-            }
-        }
-
+    private fun summarizeWithAI(text: String) {
+        Toast.makeText(requireContext(), "AI is thinking...", Toast.LENGTH_SHORT).show()
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.notesEvent.collect { event ->
-                if (event is NoteViewModel.NotesEvent.NavigateBackWithResult) {
-                    findNavController().popBackStack()
+            try {
+                val prompt = "Fix grammar, refine, and provide a short summary bullet point list for these notes: \"$text\""
+                val response = generativeModel.generateContent(prompt)
+
+                response.text?.let { aiOutput ->
+                    val currentContent = binding.contentEdit.text.toString()
+                    val newContent = "$currentContent\n\n--- AI Summary ---\n$aiOutput"
+                    binding.contentEdit.setText(newContent)
                 }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "AI Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                Log.e("AI_ERROR", "Gemini API failed", e)
             }
         }
     }
 
     private fun generatePdfAndShare(title: String, content: String) {
         val pdfDocument = PdfDocument()
-
-        // Create a Page definition (A4 size standard)
-        // 595 x 842 is standard A4 at 72 DPI
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
         val page = pdfDocument.startPage(pageInfo)
         val canvas: Canvas = page.canvas
         val paint = Paint()
 
-        // 1. Draw Title
+        // Draw Title
         paint.color = Color.BLACK
         paint.textSize = 24f
         paint.isFakeBoldText = true
         canvas.drawText(title, 40f, 60f, paint)
 
-        // 2. Draw Content (Simple multiline handling)
+        // Draw Content
         paint.textSize = 14f
         paint.isFakeBoldText = false
         var yPosition = 100f
-
-        // Split content by newlines to handle paragraphs roughly
         val lines = content.split("\n")
         for (line in lines) {
-            // Very basic text wrapping could be added here, currently just drawing lines
             canvas.drawText(line, 40f, yPosition, paint)
             yPosition += 20f
         }
 
-        // 3. Draw Image (if exists)
-        if (currentImagePath != null) {
-            try {
-                // Load bitmap (skipping complex scaling logic for brevity)
-                // In production, you'd decodeSampledBitmap from path
-                // For now, we assume standard usage
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-
         pdfDocument.finishPage(page)
 
-        // Save to cache directory
         val fileName = "Note_${System.currentTimeMillis()}.pdf"
         val file = File(requireContext().cacheDir, fileName)
 
@@ -195,32 +251,22 @@ class AddEditNoteFragment : Fragment(R.layout.fragment_addednotes) {
     }
 
     private fun sharePdf(file: File) {
-        // Create URI using FileProvider
-        val uri = FileProvider.getUriForFile(
-            requireContext(),
-            "${requireContext().packageName}.fileprovider",
-            file
-        )
-
+        val uri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.fileprovider", file)
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "application/pdf"
             putExtra(Intent.EXTRA_STREAM, uri)
             putExtra(Intent.EXTRA_SUBJECT, "Shared Note")
-            putExtra(Intent.EXTRA_TEXT, "Here is a note I exported from StudentNotes.")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-
         startActivity(Intent.createChooser(shareIntent, "Share Note via..."))
     }
 
     private fun copyImageToInternalStorage(uri: Uri): String {
-        val context = requireContext()
-        val inputStream = context.contentResolver.openInputStream(uri)
-        val fileName = "note_image_${System.currentTimeMillis()}.jpg"
-        val file = File(context.filesDir, fileName)
-        inputStream?.use { input ->
-            FileOutputStream(file).use { output ->
-                input.copyTo(output)
+        val fileName = "img_${System.currentTimeMillis()}.jpg"
+        val file = File(requireContext().filesDir, fileName)
+        requireContext().contentResolver.openInputStream(uri)?.use { inputStream ->
+            FileOutputStream(file).use { outputStream ->
+                inputStream.copyTo(outputStream)
             }
         }
         return file.absolutePath

@@ -8,34 +8,6 @@
         android:layout_height="match_parent"
         tools:context=".ui.AddEditNoteFragment">
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/mic_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:layout_marginStart="16dp"
-            android:clickable="true"
-            android:contentDescription="Speech to Text"
-            app:backgroundTint="@android:color/white"
-            app:tint="@android:color/black"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/ai_btn"
-            app:layout_constraintStart_toEndOf="@+id/add_image_btn"
-            app:srcCompat="@android:drawable/ic_btn_speak_now" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/ai_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:layout_marginEnd="16dp"
-            android:clickable="true"
-            android:contentDescription="AI Summarize"
-            app:backgroundTint="@android:color/holo_purple"
-            app:tint="@android:color/white"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/save_btn"
-            app:srcCompat="@android:drawable/ic_menu_edit" />
         <!-- TITLE -->
         <EditText
             android:id="@+id/title_edit"
@@ -82,41 +54,60 @@
             android:gravity="top"
             android:hint="Note Content..."
             android:inputType="textMultiLine"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/add_image_btn"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/image_preview" />
 
-        <!-- UPLOAD IMAGE BUTTON (Bottom Left) -->
-        <!-- Added app:tint to make the icon visible on the white button -->
+        <!-- UPLOAD IMAGE BUTTON -->
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/add_image_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginBottom="16dp"
-            android:clickable="true"
-            android:focusable="true"
             android:contentDescription="Add Image"
             app:backgroundTint="@android:color/white"
-            app:tint="@android:color/black"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:srcCompat="@android:drawable/ic_menu_gallery" />
+            app:srcCompat="@android:drawable/ic_menu_gallery"
+            app:tint="@android:color/black" />
 
-        <!-- SAVE BUTTON (Bottom Right) -->
+        <!-- SPEECH TO TEXT BUTTON -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/mic_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Speech to Text"
+            app:backgroundTint="@android:color/white"
+            app:srcCompat="@android:drawable/ic_btn_speak_now"
+            app:tint="@android:color/black" />
+
+        <!-- AI SUMMARIZE BUTTON -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/ai_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="AI Summarize"
+            app:backgroundTint="@android:color/holo_purple"
+            app:srcCompat="@android:drawable/ic_menu_edit"
+            app:tint="@android:color/white" />
+
+        <!-- SAVE BUTTON -->
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/save_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="16dp"
-            android:clickable="true"
-            android:focusable="true"
             android:contentDescription="Save Note"
+            app:srcCompat="@android:drawable/ic_menu_save" />
+
+        <!-- FLOW TO MANAGE BUTTON POSITIONS -->
+        <androidx.constraintlayout.helper.widget.Flow
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:constraint_referenced_ids="add_image_btn,mic_btn,ai_btn,save_btn"
+            app:flow_horizontalStyle="spread_inside"
+            app:flow_wrapMode="chain"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:srcCompat="@android:drawable/ic_menu_save" />
+            app:layout_constraintStart_toStartOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

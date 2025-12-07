@@ -50,7 +50,8 @@ class AddEditNoteFragment : Fragment(R.layout.fragment_addednotes) {
     // --- AI MODEL ---
     private val generativeModel by lazy {
         GenerativeModel(
-            modelName = "gemini-pro",
+            // CHANGE THIS LINE:
+            modelName = "gemini-1.5-flash",
             apiKey = BuildConfig.GEMINI_API_KEY
         )
     }
@@ -195,19 +196,36 @@ class AddEditNoteFragment : Fragment(R.layout.fragment_addednotes) {
 
     private fun summarizeWithAI(text: String) {
         Toast.makeText(requireContext(), "AI is thinking...", Toast.LENGTH_SHORT).show()
+
+        // Hide the button to prevent multiple clicks
+        binding.aiBtn.isEnabled = false
+
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val prompt = "Fix grammar, refine, and provide a short summary bullet point list for these notes: \"$text\""
+                // More direct prompt for better results
+                val prompt = "Refine the grammar of the following text and then create a bulleted summary of the key points:\n\n\"$text\""
+
                 val response = generativeModel.generateContent(prompt)
 
                 response.text?.let { aiOutput ->
-                    val currentContent = binding.contentEdit.text.toString()
-                    val newContent = "$currentContent\n\n--- AI Summary ---\n$aiOutput"
-                    binding.contentEdit.setText(newContent)
+                    // Make sure the view is still available before updating
+                    if (_binding != null) {
+                        val currentContent = binding.contentEdit.text.toString()
+                        val newContent = "$currentContent\n\n--- AI Summary ---\n$aiOutput"
+                        binding.contentEdit.setText(newContent)
+                    }
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "AI Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                Log.e("AI_ERROR", "Gemini API failed", e)
+                // More specific error logging
+                Log.e("AI_ERROR", "Gemini API call failed with exception", e)
+                if (_binding != null) { // Check if view is still there to show Toast
+                    Toast.makeText(requireContext(), "AI Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                }
+            } finally {
+                // Always re-enable the button, even if the call fails
+                if (_binding != null) {
+                    binding.aiBtn.isEnabled = true
+                }
             }
         }
     }

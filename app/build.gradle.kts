@@ -6,6 +6,16 @@ plugins {
     alias(libs.plugins.ksp)
     id("kotlin-parcelize")
 }
+import java.util.Properties
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
+// 2. Extract the key directly into a variable (default to empty string if missing)
+val apiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
 
 android {
     compileSdk = 36
@@ -21,7 +31,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "GEMINI_API_KEY", "\"${project.properties["GEMINI_API_KEY"]}\"")
+        buildConfigField("String", "GEMINI_API_KEY", "\"$apiKey\"")
     }
 
     buildTypes {

@@ -30,7 +30,12 @@ Media & File Handling
 - Speech-to-Text: Integration with Android's native RecognizerIntent for voice dictation.•PDF Generation: Native PdfDocument and Canvas drawing APIs to generate reports from note content.
 - File Sharing: configured FileProvider to securely share generated PDFs with external apps (Gmail, Drive, etc.).
 
--- Screenshots --
+-- Demo and Screenshots --
+
+
+https://github.com/user-attachments/assets/02ebfee8-bf45-4e82-9372-c8561c9bdab2
+
+
 <img width="398" height="818" alt="Screenshot 2025-12-08 163741" src="https://github.com/user-attachments/assets/16213bcc-1d06-4b5f-9f17-60058ee9fdcf" />
 <img width="398" height="818" alt="Screenshot 2025-12-08 163741" src="https://github.com/user-attachments/assets/9e64657a-2932-4067-a6f2-36f5157afd05" />
 <img width="392" height="824" alt="Screenshot 2025-12-08 163810" src="https://github.com/user-attachments/assets/035ab9d8-d6ba-4dd5-a3d7-9c10c51dbce8" />

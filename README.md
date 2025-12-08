@@ -11,24 +11,22 @@ A timer begins as soon as the player spawns, tracking total run time. Faster com
 Players earn points by defeating bugs and completing levels quickly, competing for a spot on the top 10 leaderboard. Player initials are displayed alongside their scores to encourage replayability and competition.
 
 -- Key Features --
+Character Animation
+- The player cycles through three animations: idle, running, and shooting.
 
--- Character Animation --
-The player cycles through three animations: idle, running, and shooting.
+Sound Design
+- Creepy sci-fi music and powerful gun sound effects create a tense and immersive atmosphere.
 
--- Sound Design --
-Creepy sci-fi music and powerful gun sound effects create a tense and immersive atmosphere.
+AI Pathfinding Enemies
+- Enemies actively search for the player and react dynamically to both sight and sound.
 
--- AI Pathfinding Enemies --
-Enemies actively search for the player and react dynamically to both sight and sound.
+Destructible Environment 
+- Breakable crates block paths and can be destroyed or used strategically for cover and positioning. A visible timer pressures the player to move quickly, with extra points awarded based on remaining time.
 
--- Destructible Environment --
-Breakable crates block paths and can be destroyed or used strategically for cover and positioning. A visible timer pressures the player to move quickly, with extra points awarded based on remaining time.
-
--- Timed Run System --
+- Timed Run System 
 When a level ends, it restarts with more enemies. Enemy counts scale based on the player’s score, creating progressively harder runs.
 
 -- Technical Components --
-
 Sound
 - Audio files are stored as WAV files and loaded and played using SDL_mixer.
 
